@@ -50,12 +50,12 @@ class ConstructionList(scrapy.Spider):
                 yield scrapy.Request(next1, self.parse_item_list,meta={'category':i})
 
     def used_attachment_item(self, response):
-        print("in used attachment_item")
         used_attachment = response.xpath(
             "//div/ul/li[@class='category']/a/@href").getall()
         for i in used_attachment:
             cat_temp = response.meta.get("category")
             j = response.xpath("//div/ul/li[@class='category']/a/text()").get()
+            used_attachment_path    = "https://www.constructionequipmentguide.com"+ i
             yield scrapy.Request(used_attachment_path, self.parse_item_list,meta={'category':cat_temp,'category2':j})
 
     def parse_item_list(self, response):
@@ -67,7 +67,7 @@ class ConstructionList(scrapy.Spider):
             item['item_url']   = "" .join("https://www.constructionequipmentguide.com"+collection_items.xpath("//div[@class='machine-model']/a/@href").get()).strip()
             category1          = response.meta['category'] or default
             category2          = response.meta['category2'] or default
-            item['category'] = {'cat1_name': category1,
+            item['category'] = {'cat1_name': category1,     
                                 'cat2_name': category2,
                                 'cat1_id': '',
                                 'cat2_id': ''
