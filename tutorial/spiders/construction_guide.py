@@ -74,7 +74,7 @@ class ConstructionList(scrapy.Spider):
         next_page = response.xpath('//*[contains(text(),"Next Page")]/@href').get('')
         print(next_page)
         if next_page:
-            next1 = response.urljoin(next_temp)
+            next1 = response.urljoin(next_page)
             print(next1)
             yield scrapy.Request(next1,self.parse_item_list,meta={'category':category1,'category2':category2})
 
