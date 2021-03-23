@@ -11,3 +11,4 @@ tutorial/pipelines.py
 tutorial/settings.py
 tutorial/spiders/__init__.py
 tutorial/spiders/construction_guide.py
+tutorial/spiders/construction_guide_detail.py

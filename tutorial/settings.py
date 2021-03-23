@@ -18,6 +18,8 @@ NEWSPIDER_MODULE = 'tutorial.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
+CLOSESPIDER_PAGECOUNT = 2
+
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32

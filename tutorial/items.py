@@ -49,3 +49,4 @@ class Construction(scrapy.Item):
     vendor_contact              = scrapy.Field()
     source_item_id              = scrapy.Field()
     auction_ending              = scrapy.Field()
+    requrl                      = scrapy.Field()
