@@ -17,68 +17,71 @@ class ConstructionItemDetail(scrapy.Spider):
     parse_itm_dtail = 0
     total = {}
 
-    def __init__(self, collection_name=None, *args, **kwargs):
-        try:
-            super(ConstructionItemDetail, self).__init__(*args, **kwargs)
-            global current_collection, additional_information, url, listing_urls, category_names, category_ids, thumb_urls, \
-                subcategory_names, subcategory_ids, city, state, country, \
-                collection_keys, foo_store, titles, make, model, year, serial_no, item_custom_info
+    # def __init__(self, collection_name=None, *args, **kwargs):
+    #     with open()
+        # try:
+        #     super(ConstructionItemDetail, self).__init__(*args, **kwargs)
+        #     global current_collection, additional_information, url, listing_urls, category_names, category_ids, thumb_urls, \
+        #         subcategory_names, subcategory_ids, city, state, country, \
+        #         collection_keys, foo_store, titles, make, model, year, serial_no, item_custom_info
+        #
+        #     listing_urls = []
+        #     category_names = []
+        #     category_ids = []
+        #     subcategory_names = []
+        #     subcategory_ids = []
+        #     collection_keys = []
+        #     thumb_urls = []
+        #     city = []
+        #     state = []
+        #     country = []
+        #     titles = []
+        #     make = []
+        #     model = []
+        #     year = []
+        #     serial_no = []
+        #     additional_information = []
+        #     current_collection = ''
+        #
+        #     apikey = '3b7e1d959149492ab9a71b9aae0fbff4'
+        #     client = ScrapinghubClient(apikey)
+        #     project_id = 511126
+        #     project = client.get_project(project_id)
+        #     # collections = project.collections
+        #
+        #     if not collection_name:
+        #         max_number_list = []
+        #         max_number_dict = {}
+        #         collection_name = [i.get('name') for i in collections.list()]
+        #         print(collection_name)
+        #         for k in collection_name:
+        #             try:
+        #                 get_number = k.split('_')
+        #                 number = int(get_number[-1])
+        #                 max_number_dict.update({get_number[-1]: k})
+        #                 max_number_list.append(number)
+        #             except ValueError:
+        #                 print("collection name not contain a number!!")
+        #
+        #         collection_name = max(max_number_list)
+        #         collection_name = max_number_dict.get(str(collection_name))
+        #         job_run_id = collection_name
+        #     else:
+        #         job_run_id = collection_name
+        #
+        #     foo_store = collections.get_store(job_run_id)  # collection_id
+        #     print("Getting Items from collection" + str(collection_name))
+        #     print("Length of collection" + str(foo_store.count()))
+        #     for elem in foo_store.iter():
+        #         collection_keys.append(elem['_key'])
+        #         listing_urls.append(elem['item_url'])
+        #         titles.append(str(elem['title']))
+        #         thumb_urls.append(str(elem['thumbnail_url']))
+        #     print("Fetched from collection" + str(collection_name))
+        # except Exception as e:
+        #     print(e)
 
-            listing_urls = []
-            category_names = []
-            category_ids = []
-            subcategory_names = []
-            subcategory_ids = []
-            collection_keys = []
-            thumb_urls = []
-            city = []
-            state = []
-            country = []
-            titles = []
-            make = []
-            model = []
-            year = []
-            serial_no = []
-            additional_information = []
-            current_collection = ''
 
-            apikey = '3b7e1d959149492ab9a71b9aae0fbff4'
-            client = ScrapinghubClient(apikey)
-            project_id = 511126
-            project = client.get_project(project_id)
-            collections = project.collections
-
-            if not collection_name:
-                max_number_list = []
-                max_number_dict = {}
-                collection_name = [i.get('name') for i in collections.list()]
-                print(collection_name)
-                for k in collection_name:
-                    try:
-                        get_number = k.split('_')
-                        number = int(get_number[-1])
-                        max_number_dict.update({get_number[-1]: k})
-                        max_number_list.append(number)
-                    except ValueError:
-                        print("collection name not contain a number!!")
-
-                collection_name = max(max_number_list)
-                collection_name = max_number_dict.get(str(collection_name))
-                job_run_id = collection_name
-            else:
-                job_run_id = collection_name
-
-            foo_store = collections.get_store(job_run_id)  # collection_id
-            print("Getting Items from collection" + str(collection_name))
-            print("Length of collection" + str(foo_store.count()))
-            for elem in foo_store.iter():
-                collection_keys.append(elem['_key'])
-                listing_urls.append(elem['item_url'])
-                titles.append(str(elem['title']))
-                thumb_urls.append(str(elem['thumbnail_url']))
-            print("Fetched from collection" + str(collection_name))
-        except Exception as e:
-            print(e)
 
     def parse(self, response):
         def parse(self, response):

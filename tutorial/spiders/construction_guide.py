@@ -71,14 +71,10 @@ class ConstructionList(scrapy.Spider):
                                 }
             item['requrl'] = response.url
             yield item
-        next_page = response.xpath(
-            "//div/a[@class='button green']/@href").get()
+        next_page = response.xpath('//*[contains(text(),"Next Page")]/@href').get('')
         print(next_page)
         if next_page:
-            next1 = response.urljoin(next_page)
-            next_temp = response.xpath("//div/a[@class='button green'][2]/@href").get()
-            if next_temp is not None:
-                next1 = response.urljoin(next_temp)
+            next1 = response.urljoin(next_temp)
             print(next1)
             yield scrapy.Request(next1,self.parse_item_list,meta={'category':category1,'category2':category2})
 
