@@ -1,6 +1,6 @@
 import scrapy
 # from fake_headers import Headers
-
+from tutorial.items import Construction
 import logging
 from scrapinghub import ScrapinghubClient
 import requests,json,re
@@ -10,7 +10,7 @@ from scrapy.http import HtmlResponse
 
 
 class ConstructionItemDetail(scrapy.Spider):
-    name = "CGItem"
+    name = "ConstructionItemDetail"
     start_urls = ["https://www.constructionequipmentguide.com/"]
     allowed_domains     = ['constructionequipmentguide.com']
     i = 0
@@ -18,12 +18,13 @@ class ConstructionItemDetail(scrapy.Spider):
     parse_itm_dtail = 0
     total = {}
     def __init__(self, collection_name=None, *args, **kwargs):
+        print("in init")
         try:
             super(ConstructionItemDetail, self).__init__(*args, **kwargs)
             global current_collection, additional_information, url, listing_urls, category_names, category_ids, thumb_urls, \
                 subcategory_names, subcategory_ids, city, state, country, \
                 collection_keys, foo_store, titles, make, model, year, serial_no, item_custom_info, \
-                category,item_url,item_list
+                categories,item_url,item_title,thumbnail_url,cat1
 
             listing_urls = []
             category_names = []
@@ -42,14 +43,19 @@ class ConstructionItemDetail(scrapy.Spider):
             serial_no = []
             additional_information = []
             current_collection = ''
-            item_list       = []
+            item_title       = []
             item_url        = []
-            category        = []
+            categories        = []
+            cat1            = None
 
-            table = pd.read_csv("tutorial/spiders/cg.csv")
-            item_list = list(table['item_title'])
+            table = pd.read_csv("tutorial/spiders/newcg.csv")
+            item_title = list(table['item_title'])
             item_url = list(table['item_url'])
-            category = list(table['category'])
+            thumbnail_url = list(table['thumbbnail_url'])
+            categories = str(table['category'])
+            print(categories)
+            cat1 =  dict((x.strip(), y.strip()) for x, y in (element.split(':') for element in cat2.split(',')))
+            # print("cat1", cat1.get('cat1_name'))
 
 
             apikey = '3b7e1d959149492ab9a71b9aae0fbff4'
@@ -93,15 +99,13 @@ class ConstructionItemDetail(scrapy.Spider):
 
 
     def parse(self, response):
-        def parse(self, response):
-            try:
-                pass
-                for i in range(0, len(item_url)):
-                    yield scrapy.Request(url=item_url[i], callback=self.parse_item_detail, meta={
-                        'listing_url': item_url[i],
-                        'titles': item_title[i]}, dont_filter=True)
-            except Exception as e:
-                print(e)
+        try:
+            for i in range(0, len(item_url)):
+                yield scrapy.Request(url=item_url[i], callback=self.parse_item_detail, meta={
+                    'listing_url': item_url[i],
+                    'titles': item_title[i]}, dont_filter=True)
+        except Exception as e:
+            print(e)
     #
     #
     def parse_item_detail(self, response):
@@ -109,23 +113,40 @@ class ConstructionItemDetail(scrapy.Spider):
         collection_items = response.url
         default                     = ""
         item['item_title']          = response.xpath("//div[@class='equipment-detail']/h1/text()").get()
-        item['thumbbnail_url']      = response.xpath("//div[@class='mySlides']/img/@src").get()
-        if 'http' not in item['thumbnail_url']:
-            item['thumbnail_url'] = ''
+        item['thumbbnail_url']      =  thumbnail_url
+        if 'http' not in item['thumbbnail_url']:
+            item['thumbbnail_url'] = ''
             item['thumbnail_s3_path'] = '/thumbnailimagenotfound.jpg'
         else:
             item['thumbnail_s3_path'] = ''
-        categories                          = response.xpath("//span[@itemprop='itemListElement']/span/a/span/text()").getall()
+        item['img_url']             = response.xpath("//div[@class='mySlides']/img/@src").get()
         if categories:
-            categories                      = categories[-2:]
-        if categories:
-            item['item_main_category']      = categories[0]
-            item['item_main_category_id']   = categories[0]
-            item['category']                = categories[1]
-            item['category_id']             = categories[1]
-            item['item_sub_category ']      = categories[2]
-            item['item_source_sub_category_id'] = categories[2]
-        item['buying_format'] = 'Sell'
+            item['item_main_category']      = categor[0]
+            item['item_main_category_id']   = categor[0]
+            item['category']                = categor[1]
+            item['category_id']             = categor[1]
+        location            = response.xpath("//table[@class='machine-info']//tr[@class='machine-location']/td[2]").get()
+        if location is not None:
+            item['location']    = location
+            item['vendor_location'] = location
+            item['extra_fields'] = {
+                'location':location,
+                'vendor_location':location
+            }
+        else:
+            item['location']    = ""
+        thumbnai_url            = response.xpath("//img[@class='demo cursor']/@src").getall()
+        if thumbnai_url:
+            item['thumbbnail_url'] = thumbnai_url
+        else:
+            item['thumbbnail_url']      = ""
+        item['vendor_contact']          = ""
+        make                    = response.xpath("//div[@class='breadcrumbs']//span[@content='2']//span/text()").get()
+        item['make']            = make
+        model                   = response.xpath("//div[@class='breadcrumbs']//span[@content='4']//span/text()").get()
+        item['model']           = model
+        item['url']             = response.url
+        item['buying_format'] = 'Sale'
         price                       = response.xpath("//p[@class='equip-price']/text()").get()
         try:
             price                       = int(eval(price.strip("For Sale:").replace("$", "").replace("USD", "").replace(",", "")))
@@ -135,9 +156,16 @@ class ConstructionItemDetail(scrapy.Spider):
         except:
                 item['currency']    = item['price'] = ''
         item['price_original']      = item['price']
-        item['location']            = response.xpath("//tbody/tr[@class='machine-location']/td[2]").get()
-        item['vendor_name']         = 'COnstruction_Equipment_Guide'
-        item['vendor_url']          = ""
+        vendor_name                 = response.xpath("//div[@class='dealer-name']/h4/text()").get()
+        if vendor_name:
+            item['vendor_name']         = 'COnstruction_Equipment_Guide'
+        else:
+            item['vendor_name']         = ""
+        vendor_url                  = response.xpath("//div[@class='more-info']/a/@href").get()
+        if vendor_url:
+            item['vendor_url']      = vendor_url
+        else:
+            item['vendor_url']          = ""
         item['img_url']             = response.xpath("//div[@class='mySlides']/img/@src").get()
         item['vendor_city'] = ''
         item['vendor_state'] = ''
@@ -153,7 +181,7 @@ class ConstructionItemDetail(scrapy.Spider):
             item['model']        = ""
             serial_no            = response.xpath("//table//tr[@class='equip-serial']/td[2]").get()
             if serial_no is not None:
-                ite['serial_number'] = serial_no
+                item['serial_number'] = serial_no
             else:
                 item['serial_no']       = ""
         item['auction_ending']          = ""
@@ -164,17 +192,13 @@ class ConstructionItemDetail(scrapy.Spider):
                 'hours':hours
             }
             item['extra_fields']    = hours
+        else:
+            item['extra_fields']    = ""
         title           = str(response.meta['titles']).replace("null",'')
-        item[title]     = title
+        item['title']     = title
         next_page = response.xpath(
             "//div/a[@class='button green']/@href").get()
         item['vendor_contact'] = ''
         item['details'] = ''
-        if item['item_title'] and item['item_main_category']:
-            yield item
-        if next_page is not None:
-            next1 = response.urljoin(next_page)
-            next_temp = response.xpath("//div/a[@class='button green'][2]/@href").get()
-            if next_temp is not None:
-                next1 = response.urljoin(next_temp)
-            yield scrapy.Request(next1, callback=self.parse_item_detail, dont_filter=True)
+        yield item
+        # if item['item_title'] and item['item_main_category']:

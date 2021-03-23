@@ -18,6 +18,7 @@ class TutorialItem(scrapy.Item):
 class Construction(scrapy.Item):
     category                    = scrapy.Field()
     item_detail                 = scrapy.Field()
+    details                     = scrapy.Field()
     title                       = scrapy.Field()
     data_id                     = scrapy.Field()
     item_custom_info            = scrapy.Field()
@@ -50,3 +51,8 @@ class Construction(scrapy.Item):
     source_item_id              = scrapy.Field()
     auction_ending              = scrapy.Field()
     requrl                      = scrapy.Field()
+    category_id                 = scrapy.Field()
+    buying_format               = scrapy.Field()
+    location                    = scrapy.Field()
+    img_url                     = scrapy.Field()
+    vendor_country              = scrapy.Field()

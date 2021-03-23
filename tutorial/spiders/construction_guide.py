@@ -10,7 +10,7 @@ from scrapy.selector import Selector
 
 
 class ConstructionList(scrapy.Spider):
-    name = "CGList"
+    name = "ConstructionList"
     start_urls = ["https://www.constructionequipmentguide.com/"]
     global item
     item = Construction()
@@ -27,7 +27,6 @@ class ConstructionList(scrapy.Spider):
                        "Straw Blowers/ Hydroseeders", "Sweepers", "Telehandlers",
                        "Trenching/boring/Cable Pows", "Utility Vehicles", "Welders", "Wheel Dozers",
                        "Wheel Loaders"]
-        print(cat_content)
         target = response.xpath("//div/ul/li/a/text()").getall()
         next_cat = []
         nexts = []
@@ -40,14 +39,12 @@ class ConstructionList(scrapy.Spider):
         for i, j in zip(nexts, next_cat):
             if i == 'Attachments' or i == 'Compaction Equipment' or i == 'Power System Generation':
                 next1 = response.urljoin(j)
-                print("in next",next1)
                 yield scrapy.Request(next1, self.used_attachment_item,meta={'category':i})
             else:
                 next1 = response.urljoin(j)
                 yield scrapy.Request(next1, self.parse_item_list,meta={'category':i})
 
     def used_attachment_item(self, response):
-        print("in used_attachment_item")
         used_attachment = response.xpath(
             "//div/ul/li[@class='category']/a/@href").getall()
         for i in used_attachment:
@@ -69,12 +66,11 @@ class ConstructionList(scrapy.Spider):
                                 'cat1_id': '',
                                 'cat2_id': ''
                                 }
+            item['thumbbnail_url'] = response.xpath("//div[@class='machine-photo']/a/img/@src").get()
             item['requrl'] = response.url
             yield item
         next_page = response.xpath('//*[contains(text(),"Next Page")]/@href').get('')
-        print(next_page)
         if next_page:
             next1 = response.urljoin(next_page)
-            print(next1)
             yield scrapy.Request(next1,self.parse_item_list,meta={'category':category1,'category2':category2})
 
