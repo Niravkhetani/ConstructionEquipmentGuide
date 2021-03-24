@@ -9,8 +9,9 @@ from scrapy.http import HtmlResponse
 from scrapy.selector import Selector
 
 
-class ConstructionList(scrapy.Spider):
-    name = "ConstructionList"
+class Listing(scrapy.Spider):
+    name = "listing"
+    allowed_domains = "constructionequipmentguide.com"
     start_urls = ["https://www.constructionequipmentguide.com/"]
     global item
     item = Construction()

@@ -1,26 +1,27 @@
 import scrapy
-# from fake_headers import Headers
+from fake_headers import Headers
 from tutorial.items import Construction
 import logging
 from scrapinghub import ScrapinghubClient
 import requests,json,re
 import pandas as pd
 from scrapy.http import HtmlResponse
+import ast
 
 
 
-class ConstructionItemDetail(scrapy.Spider):
-    name = "ConstructionItemDetail"
+class Detail(scrapy.Spider):
+    name = "detail"
+    allowed_domains = "constructionequipmentguide.com"
     start_urls = ["https://www.constructionequipmentguide.com/"]
-    allowed_domains     = ['constructionequipmentguide.com']
+    # allowed_domains     = ['constructionequipmentguide.com']
     i = 0
     parse_itm = 0
     parse_itm_dtail = 0
     total = {}
-    def __init__(self, collection_name=None, *args, **kwargs):
-        print("in init")
+    def __init__(Detail,self, collection_name=None, *args, **kwargs):
         try:
-            super(ConstructionItemDetail, self).__init__(*args, **kwargs)
+            super(Details, self).__init__(*args, **kwargs)
             global current_collection, additional_information, url, listing_urls, category_names, category_ids, thumb_urls, \
                 subcategory_names, subcategory_ids, city, state, country, \
                 collection_keys, foo_store, titles, make, model, year, serial_no, item_custom_info, \
@@ -45,17 +46,13 @@ class ConstructionItemDetail(scrapy.Spider):
             current_collection = ''
             item_title       = []
             item_url        = []
-            categories        = []
             cat1            = None
 
             table = pd.read_csv("tutorial/spiders/newcg.csv")
             item_title = list(table['item_title'])
             item_url = list(table['item_url'])
             thumbnail_url = list(table['thumbbnail_url'])
-            categories = str(table['category'])
-            print(categories)
-            cat1 =  dict((x.strip(), y.strip()) for x, y in (element.split(':') for element in cat2.split(',')))
-            # print("cat1", cat1.get('cat1_name'))
+            categories = list(table['category'])
 
 
             apikey = '3b7e1d959149492ab9a71b9aae0fbff4'
@@ -68,7 +65,6 @@ class ConstructionItemDetail(scrapy.Spider):
             #     max_number_list = []
             #     max_number_dict = {}
             #     collection_name = [i.get('name') for i in collections.list()]
-            #     print(collection_name)
             #     for k in collection_name:
             #         try:
             #             get_number = k.split('_')
@@ -103,7 +99,8 @@ class ConstructionItemDetail(scrapy.Spider):
             for i in range(0, len(item_url)):
                 yield scrapy.Request(url=item_url[i], callback=self.parse_item_detail, meta={
                     'listing_url': item_url[i],
-                    'titles': item_title[i]}, dont_filter=True)
+                    'titles': item_title[i],
+                    'categories':categories[i]}, dont_filter=True)
         except Exception as e:
             print(e)
     #
@@ -120,11 +117,13 @@ class ConstructionItemDetail(scrapy.Spider):
         else:
             item['thumbnail_s3_path'] = ''
         item['img_url']             = response.xpath("//div[@class='mySlides']/img/@src").get()
+        data                        = ast.literal_eval(response.meta['categories'])
+        # data                        = json.loads(response.meta['categories'])
         if categories:
-            item['item_main_category']      = categor[0]
-            item['item_main_category_id']   = categor[0]
-            item['category']                = categor[1]
-            item['category_id']             = categor[1]
+            item['item_main_category']      = data.get('cat1_name')
+            item['item_main_category_id']   = data.get('cat1_id')
+            item['category']                = data.get('cat2_name')
+            item['category_id']             = data.get('cat2_id')
         location            = response.xpath("//table[@class='machine-info']//tr[@class='machine-location']/td[2]").get()
         if location is not None:
             item['location']    = location
@@ -134,39 +133,39 @@ class ConstructionItemDetail(scrapy.Spider):
                 'vendor_location':location
             }
         else:
-            item['location']    = ""
-        thumbnai_url            = response.xpath("//img[@class='demo cursor']/@src").getall()
+            item['location'] = ""
+        thumbnai_url = response.xpath("//img[@class='demo cursor']/@src").getall()
         if thumbnai_url:
             item['thumbbnail_url'] = thumbnai_url
         else:
-            item['thumbbnail_url']      = ""
-        item['vendor_contact']          = ""
-        make                    = response.xpath("//div[@class='breadcrumbs']//span[@content='2']//span/text()").get()
-        item['make']            = make
-        model                   = response.xpath("//div[@class='breadcrumbs']//span[@content='4']//span/text()").get()
-        item['model']           = model
-        item['url']             = response.url
+            item['thumbbnail_url'] = ""
+        item['vendor_contact'] = ""
+        make = response.xpath("//div[@class='breadcrumbs']//span[@content='2']//span/text()").get()
+        item['make'] = make
+        model  = response.xpath("//div[@class='breadcrumbs']//span[@content='4']//span/text()").get()
+        item['model'] = model
+        item['url'] = response.url
         item['buying_format'] = 'Sale'
-        price                       = response.xpath("//p[@class='equip-price']/text()").get()
+        price = response.xpath("//p[@class='equip-price']/text()").get()
         try:
-            price                       = int(eval(price.strip("For Sale:").replace("$", "").replace("USD", "").replace(",", "")))
-            item['price']                = price
+            price = int(eval(price.strip("For Sale:").replace("$", "").replace("USD", "").replace(",", "")))
+            item['price'] = price
             if item['price']:
-                item['currency']    = 'USD'
+                item['currency'] = 'USD'
         except:
-                item['currency']    = item['price'] = ''
-        item['price_original']      = item['price']
-        vendor_name                 = response.xpath("//div[@class='dealer-name']/h4/text()").get()
+                item['currency'] = item['price'] = ''
+        item['price_original']  = item['price']
+        vendor_name = response.xpath("//div[@class='dealer-name']/h4/text()").get()
         if vendor_name:
-            item['vendor_name']         = 'COnstruction_Equipment_Guide'
+            item['vendor_name'] = vendor_name
         else:
-            item['vendor_name']         = ""
-        vendor_url                  = response.xpath("//div[@class='more-info']/a/@href").get()
+            item['vendor_name'] = ""
+        vendor_url = response.xpath("//div[@class='more-info']/a/@href").get()
         if vendor_url:
-            item['vendor_url']      = vendor_url
+            item['vendor_url'] = vendor_url
         else:
-            item['vendor_url']          = ""
-        item['img_url']             = response.xpath("//div[@class='mySlides']/img/@src").get()
+            item['vendor_url'] = ""
+        item['img_url'] = response.xpath("//div[@class='mySlides']/img/@src").get()
         item['vendor_city'] = ''
         item['vendor_state'] = ''
         item['vendor_country'] = ''
@@ -177,16 +176,16 @@ class ConstructionItemDetail(scrapy.Spider):
                 year = re.findall(r'\d{4}', str(year))[0]
                 item['year'] = year
         except:
-            item['year']         = ""
-            item['model']        = ""
-            serial_no            = response.xpath("//table//tr[@class='equip-serial']/td[2]").get()
+            item['year'] = ""
+            item['model'] = ""
+            serial_no = response.xpath("//table//tr[@class='equip-serial']/td[2]").get()
             if serial_no is not None:
                 item['serial_number'] = serial_no
             else:
-                item['serial_no']       = ""
-        item['auction_ending']          = ""
-        item['make']                    = ""
-        hours                   = response.xpath("//table[@class='machine-info']/tbody/tr/td[2]").get()
+                item['serial_no'] = ""
+        item['auction_ending'] = ""
+        item['make'] = ""
+        hours  = response.xpath("//table[@class='machine-info']/tbody/tr/td[2]").get()
         if hours is not None:
             hours   = {
                 'hours':hours
